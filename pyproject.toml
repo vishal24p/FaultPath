@@ -1,0 +1,11 @@
+[project]
+name = "faultpath"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "langchain==1.4.4",
+    "langchain-openai>=1.7.3",
+    "langgraph==1.2.14",
+    "langgraph-checkpoint-sqlite==3.1.1",
+    "python-dotenv>=1.2.4",
+]
