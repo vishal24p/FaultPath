@@ -6,12 +6,12 @@ from typing import Literal, TypedDict
 
 os.environ.setdefault("LANGGRAPH_STRICT_MSGPACK", "true")
 
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.checkpoint.sqlite import SqliteSaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Command, interrupt
 
-MODEL_ID = "gemini-3.7-flash"
+from llm import build_model
+
 DB_PATH = "incident_checkpoints.db"
 RUNBOOK_DIR = Path("runbooks")
 RESTRICTED_TERMS = (
@@ -62,20 +62,10 @@ class IncidentState(TypedDict, total=False):
 
 
 def build_analyst():
-    project_id = os.environ.get("GOOGLE_CLOUD_PROJECT")
-    if not project_id:
-        raise RuntimeError("GOOGLE_CLOUD_PROJECT is not set.")
-
-    model = ChatGoogleGenerativeAI(
-        model=MODEL_ID,
-        project=project_id,
-        location="global",
-        vertexai=True,
-        max_retries=2,
-    )
+    model = build_model()
     return model.with_structured_output(
         schema=ANALYSIS_SCHEMA,
-        method="json_schema",
+        method="function_calling",
     )
 
 
