@@ -13,7 +13,7 @@ In this Project you turn that single analyst into a team: a router, specialist a
 | `app.py` | The starting workflow: `start` and `resume` commands, one analyst, one approval gate |
 | `specialists.py` | Setup code for the specialist agents: the shared model connection, a fixture loader, and one tool each for logs, deploys, and metrics. You add the agents themselves in the Project |
 | `status_page.py` | The web page for the Secret Mission: HTML, styling, and a small local server. You write the part that reads an incident's saved state |
-| `requirements.txt` | Pinned packages. `langchain` is new in this Project (for `create_agent`) |
+| `pyproject.toml`, `uv.lock`, `.python-version` | Project dependencies, locked versions, and Python 3.11 selection |
 | `data/alerts.json` | Two alerts to triage: `INC-2041` (checkout errors) and `INC-2042` (search latency) |
 | `data/logs.jsonl` | Application logs from the services involved, one JSON object per line |
 | `data/deploys.json` | Recent deploys, with the service, owning team, time, and change |
@@ -24,29 +24,25 @@ The data is made up and small on purpose. Your agents read it through tools, so 
 
 ## Set up
 
-Install Python 3.10+ and [Ollama](https://ollama.com/download). Keep Ollama running (use `ollama serve` if needed), then sign in for the cloud model:
+Install [uv](https://docs.astral.sh/uv/getting-started/installation/) and [Ollama](https://ollama.com/download). uv uses the project's Python 3.11 selection and downloads Python if needed. Keep Ollama running (use `ollama serve` if needed), then sign in for the cloud model:
 
 ```bash
 ollama signin
 ```
 
-From this repository, create a virtual environment and install the packages.
+From this repository, sync the locked dependencies and copy the environment template. uv creates the virtual environment automatically.
 
 Windows PowerShell:
 
 ```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
+uv sync --locked
 Copy-Item .env.example .env
 ```
 
 macOS / Linux:
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
-python3 -m pip install -r requirements.txt
+uv sync --locked
 cp .env.example .env
 ```
 
@@ -65,8 +61,8 @@ To switch to another OpenAI-compatible provider, change these same three variabl
 ## Check that it runs
 
 ```bash
-python app.py start --thread smoke-001 --incident "Production checkout API returns HTTP 500 for 1 in 6 requests after a config deploy."
-python app.py resume --thread smoke-001 --decision approve
+uv run --locked python app.py start --thread smoke-001 --incident "Production checkout API returns HTTP 500 for 1 in 6 requests after a config deploy."
+uv run --locked python app.py resume --thread smoke-001 --decision approve
 ```
 
 The first command should print `WORKFLOW PAUSED` and an approval payload. The second resumes the saved workflow and publishes `runbooks/smoke-001.md`. Checkpoints are stored in `incident_checkpoints.db` in the current directory. The `LangChainBetaWarning` about the v3 streaming protocol is expected.
@@ -74,10 +70,10 @@ The first command should print `WORKFLOW PAUSED` and an approval payload. The se
 Run the offline tests without a model connection:
 
 ```bash
-python -m unittest discover -s tests -v
+uv run --locked python -m unittest discover -s tests -v
 ```
 
 ## Branches
 
 - `main` is the starting point for the Project. Clone it and follow the Project's steps from here.
-- `solution` is the finished build, with offline tests (`python3 -m pip install pytest && python3 -m pytest`). Use it to check your work if you get stuck.
+- `solution` is the finished build. Use it to check your work if you get stuck; follow that branch's setup and test instructions.
